@@ -38,6 +38,16 @@ struct HashSumException : public StackException {
     StackException(message, function_name) {}
 };
 
+struct ParamsPoisonedException : public StackException {
+  ParamsPoisonedException(const std::string& message, const std::string& function_name = ""):
+    StackException(message, function_name) {}
+};
+
+struct IncorrectPointerException : public StackException {
+  IncorrectPointerException(const std::string& message, const std::string& function_name = ""):
+    StackException(message, function_name) {}
+};
+
 std::ostream& operator<<(std::ostream& os, const StackException& iaexception) {
   os << "!!! Exception: " << iaexception.message;
   if (!iaexception.function_name.empty()) {
