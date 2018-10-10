@@ -56,9 +56,13 @@ class Stack {
     const T* cur_item = reinterpret_cast<const T*>(from + CANARY_SIZE);
     T* new_item = reinterpret_cast<T*>(to + CANARY_SIZE);
 
+    std::cerr << "copy items begin\n";
+
     for (size_t item_id = 0; item_id < item_count_; ++item_id, ++cur_item, ++new_item) {
+      std::cerr << *cur_item << '\n';
       *new_item = *cur_item;
     }
+    std::cerr << "copy items end\n";
   }
 
   void setCapacity(size_t new_capacity) {
@@ -90,6 +94,10 @@ class Stack {
   }
 
   void destroy() {
+    if (!bytes_) {
+      return;
+    }
+    std::cerr << "try to destroy old items\n";
     for (size_t item_id = 0; item_id < item_count_; ++item_id) {
       getElementPtr(item_id)->~T();
     }
@@ -100,7 +108,6 @@ class Stack {
   void copyParameters(const StackRef&& another) {
     capacity_ = another.capacity_;
     item_count_ = another.item_count_;
-    items_begin_ = another.items_begin_;
 #ifndef NDEBUG
     initCanaries();
     hash_sum_ = another.hash_sum_;
@@ -286,13 +293,18 @@ class Stack {
 
   Stack(Stack&& another) {
     setBytesPtr(another.bytes_);
-    copyParameters(another);
+    items_begin_ = bytes_ + CANARY_SIZE;
+    copyParameters(std::move(another));
     another.setBytesPtr(nullptr);
   }
 
   Stack(const Stack& another) {
+    setBytesPtr(new char[2 * CANARY_SIZE + another.capacity_ * sizeof(T) + 1]);
+    items_begin_ = bytes_ + CANARY_SIZE;
+    std::cerr << "copy par\n";
     copyParameters(std::forward<const Stack>(another));
-    setBytesPtr(new char[2 * CANARY_SIZE + item_count_ * sizeof(T) + 1]);
+    std::cerr << "copy par finished\n";
+    std::cerr << item_count_ << ' ' << another.item_count_ << '\n';
     copyItems(another.bytes_, bytes_);
   }
 
@@ -306,6 +318,7 @@ class Stack {
 #endif
     destroy();
     setBytesPtr(another.bytes_);
+    items_begin_ = bytes_ + CANARY_SIZE;
     copyParameters(another);
     another.setBytesPtr(nullptr);
     return *this;
@@ -320,8 +333,11 @@ class Stack {
     another.assertCorrectness();
 #endif
     destroy();
+    std::cerr << "old one was destroyed\n";
+    setBytesPtr(new char[2 * CANARY_SIZE + another.capacity_ * sizeof(T) + 1]);
+    items_begin_ = bytes_ + CANARY_SIZE;
+    std::cerr << "pointers were set\n";
     copyParameters(another);
-    setBytesPtr(new char[2 * CANARY_SIZE + item_count_ * sizeof(T) + 1]);
     copyItems(another.bytes_, bytes_);
     return *this;
   }

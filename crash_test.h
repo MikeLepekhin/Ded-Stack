@@ -19,6 +19,8 @@ void nullPtrTest1() {
   } catch (StackException& exc) {
     std::cerr << exc;
   }
+
+  std::cerr << "OK\n";
 }
 
 template<class Container>
@@ -35,6 +37,7 @@ void nullPtrTest2() {
   } catch (StackException& exc) {
     std::cerr << exc;
   }
+  std::cerr << "OK\n";
 }
 
 template<class Container>
@@ -103,7 +106,9 @@ void canaryTest1() {
 template<class Container>
 void canaryTest2() {
   try {
+    std::cout << "I try to debug\n";
     Container st;
+    st.dump();
     for (int i = 0; i < 100; ++i) {
       st.push(i);
     }
@@ -122,6 +127,52 @@ void canaryTest2() {
     for (int i = 0; i < 100; ++i) {
       st.pop();
     }
+  } catch (StackException& exc) {
+    std::cerr << exc;
+  }
+}
+
+template<class Container>
+void stringCopyTest() {
+  try {
+    std::cout << "I try to debug\n";
+    Container st;
+    st.push("hello");
+    st.push(",");
+    st.push("world!");
+
+    Container st2 = st;
+
+    const std::string *cptr = &st2[1];
+    std::string *ptr = const_cast<std::string *>(cptr);
+    *(ptr + 2) = "azaza ahaha";
+    st2.dump();
+
+    Container st3 = st2;
+
+  } catch (StackException& exc) {
+    std::cerr << exc;
+  }
+}
+
+template<class Container>
+void stringMoveTest() {
+  try {
+    std::cout << "I try to debug\n";
+    Container st;
+    st.push("hello");
+    st.push(",");
+    st.push("world!");
+
+    Container st2 = std::move(st);
+
+    const std::string *cptr = &st2[1];
+    std::string *ptr = const_cast<std::string *>(cptr);
+    *(ptr + 2) = "canary should be destroyed";
+    st2.dump();
+
+    Container st3 = std::move(st2);
+
   } catch (StackException& exc) {
     std::cerr << exc;
   }
