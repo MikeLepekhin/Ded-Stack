@@ -187,6 +187,7 @@ class Stack {
     size_t correct_full_hash = calcFullHash();
     bool ok = true;
 
+    std::cerr << "\n";
     std::cerr << "saved hash sum: " << hash_sum_ << '\n';
     if (hash_sum_ == correct_hash_sum) {
       std::cerr << "OK\n";
@@ -245,10 +246,13 @@ class Stack {
   void printItems() const {
     ASSERT_POINTERS();
 
+    std::cerr << "\n";
     std::cerr << "item count: " << item_count_ << '\n';
     std::cerr << "items: ";
-    for (size_t item_id = 0; item_id < item_count_; ++item_id) {
-      std::cerr << *getElementPtr(item_id) << ' ';
+    if (item_count_ > 0) {
+      for (size_t item_id = 0; item_id < item_count_; ++item_id) {
+        std::cerr << *getElementPtr(item_id) << ' ';
+      }
     }
     std::cerr << '\n';
   }
@@ -404,10 +408,12 @@ class Stack {
   }
 
   size_t size() const {
+    ASSERT_CORRECTNESS();
     return item_count_;
   }
 
   bool empty() const {
+    ASSERT_CORRECTNESS();
     return item_count_ > 0;
   }
 
