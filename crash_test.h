@@ -15,7 +15,7 @@ void nullPtrTest1() {
     int *st_ptr = reinterpret_cast<int*>(&st);
     *(st_ptr + 20) = 0;
     std::cout << st[0] << '\n';
-    st.dump();
+    st.dump(__PRETTY_FUNCTION__);
   } catch (StackException& exc) {
     std::cerr << exc;
   }

@@ -10,7 +10,7 @@ void printFirstK(int k) {
   for (int i = 0; i < k; ++i) {
     st.push(i);
     if (i % 10 == 3) {
-      st.dump();
+      st.dump(__PRETTY_FUNCTION__);
     }
   }
   for (int i = 0; i < k; ++i) {
@@ -24,13 +24,13 @@ void printFirstK(int k) {
 
 int main() {
   try {
-    stringMoveTest<Stack<std::string>>();
+    //stringMoveTest<Stack<std::string>>();
     nullPtrTest1<Stack<int>>();
-    nullPtrTest2<Stack<int>>();
+    /*nullPtrTest2<Stack<int>>();
     okTest<Stack<int>>();
     hashSumTest1<Stack<int>>();
     canaryTest1<Stack<int>>();
-    canaryTest2<Stack<int>>();
+    canaryTest2<Stack<int>>();*/
   } catch (StackException& stackException) {
     std::cerr << stackException << '\n';
   }
