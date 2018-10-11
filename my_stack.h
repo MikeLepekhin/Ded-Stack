@@ -55,20 +55,25 @@ class Stack {
   void copyItems(const char* from, char* to) {
     const T* cur_item = reinterpret_cast<const T*>(from + CANARY_SIZE);
     T* new_item = reinterpret_cast<T*>(to + CANARY_SIZE);
-
+#ifndef NDEBUG
     std::cerr << "copy items begin\n";
-
+#endif
     for (size_t item_id = 0; item_id < item_count_; ++item_id, ++cur_item, ++new_item) {
       std::cerr << *cur_item << '\n';
       *new_item = *cur_item;
     }
+#ifndef NDEBUG
     std::cerr << "copy items end\n";
+#endif
   }
 
   void setCapacity(size_t new_capacity) {
 #ifndef NDEBUG
     assertCorrectness();
 #endif
+    if (capacity_ == new_capacity) {
+      return;
+    }
 
     char* new_bytes = new char[new_capacity * sizeof(T) + 2 * CANARY_SIZE + 1];
 
@@ -77,7 +82,6 @@ class Stack {
     setBytesPtr(new_bytes);
     items_begin_ = bytes_ + CANARY_SIZE;
     capacity_ = new_capacity;
-
     hash_sum_ = calcHashSum();
 
 #ifndef NDEBUG
@@ -97,7 +101,9 @@ class Stack {
     if (!bytes_) {
       return;
     }
+#ifndef NDEBUG
     std::cerr << "try to destroy old items\n";
+#endif
     for (size_t item_id = 0; item_id < item_count_; ++item_id) {
       getElementPtr(item_id)->~T();
     }
@@ -139,6 +145,7 @@ class Stack {
   bool checkHashSum() const {
     std::cerr << "saved hash sum: " << hash_sum_ << '\n';
     size_t correct_hash_sum = calcHashSum();
+
     if (hash_sum_ == correct_hash_sum) {
       std::cerr << "ok\n";
       return true;
@@ -208,25 +215,23 @@ class Stack {
   }
 
   void assertParams() const {
-    bool ok = true;
+    bool correct = true;
 
-    ok &= (EXPANSION_COEFF == 2);
-    ok &= (SHRINKAGE_COEFF == 2);
-    ok &= (MAX_LOAD_FACTOR == 0.5);
-    ok &= (MIN_LOAD_FACTOR == 0.25);
-    ok &= (MIN_CAPACITY == 8);
-    ok &= (CANARY_SIZE == 4);
-    ok &= (CANARY_INIT_VALUE == 1983776228);
-
-    if (!ok) {
+    correct &= (EXPANSION_COEFF == 2);
+    correct &= (SHRINKAGE_COEFF == 2);
+    correct &= (MAX_LOAD_FACTOR == 0.5);
+    correct &= (MIN_LOAD_FACTOR == 0.25);
+    correct &= (MIN_CAPACITY == 8);
+    correct &= (CANARY_SIZE == 4);
+    correct &= (CANARY_INIT_VALUE == 1983776228);
+    if (!correct) {
       throw ParamsPoisonedException("parameters are corrupted");
     }
   }
 
   void assertPointers() const {
-    if (bytes_copy_ != bytes_ || items_begin_ != bytes_ + CANARY_SIZE ||
-        capacity_ < 8 ||
-        item_count_ > capacity_ * MAX_LOAD_FACTOR) {
+    if (bytes_copy_ != bytes_ || items_begin_ != bytes_ + CANARY_SIZE
+        || capacity_ < 8 || item_count_ > capacity_ * MAX_LOAD_FACTOR) {
       throw IncorrectPointerException("pointers are destroyed");
     }
   }
@@ -258,7 +263,6 @@ class Stack {
       throw exc;
     }
   }
-
 #endif
 
  void setBytesPtr(char* new_bytes) {
@@ -286,12 +290,26 @@ class Stack {
 #ifndef NDEBUG
     initCanaries();
     hash_sum_ = 0;
-
-#endif
     std::cerr << "stack was created\n";
+#endif
+  }
+
+  Stack(size_t size, const T& value): Stack() {
+    size_t optimal_capacity = capacity_;
+
+    while (optimal_capacity * MAX_LOAD_FACTOR < size) {
+      optimal_capacity *= 2;
+    }
+    setCapacity(optimal_capacity);
+    for (size_t item_id = 0; item_id < item_count_; ++item_id) {
+      *getElementPtr(item_id) = value;
+    }
   }
 
   Stack(Stack&& another) {
+#ifndef NDEBUG
+    another.assertCorrectness();
+#endif
     setBytesPtr(another.bytes_);
     items_begin_ = bytes_ + CANARY_SIZE;
     copyParameters(std::move(another));
@@ -299,6 +317,9 @@ class Stack {
   }
 
   Stack(const Stack& another) {
+#ifndef NDEBUG
+    another.assertCorrectness();
+#endif
     setBytesPtr(new char[2 * CANARY_SIZE + another.capacity_ * sizeof(T) + 1]);
     items_begin_ = bytes_ + CANARY_SIZE;
     std::cerr << "copy par\n";
@@ -306,6 +327,14 @@ class Stack {
     std::cerr << "copy par finished\n";
     std::cerr << item_count_ << ' ' << another.item_count_ << '\n';
     copyItems(another.bytes_, bytes_);
+  }
+
+  size_t size() const {
+    return item_count_;
+  }
+
+  bool empty() const {
+    return item_count_ > 0;
   }
 
   T& operator=(Stack&& another) {
@@ -403,10 +432,12 @@ class Stack {
 #ifndef NDEBUG
   bool check() const {
     try {
+      assertParams();
+      assertPointers();
       assertCanaries();
       assertHashSum();
       return true;
-    } catch (StackException) {
+    } catch (StackException&) {
       return false;
     }
   }
@@ -446,6 +477,11 @@ class Stack {
 #endif
 
   ~Stack() {
+#ifndef NDEBUG
+    if (!check()) {
+      return;
+    }
+#endif
     destroy();
   }
 };

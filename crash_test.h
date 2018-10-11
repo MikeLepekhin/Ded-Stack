@@ -146,7 +146,7 @@ void stringCopyTest() {
     const std::string *cptr = &st2[1];
     std::string *ptr = const_cast<std::string *>(cptr);
     *(ptr + 2) = "azaza ahaha";
-    st2.dump();
+    //st2.dump();
 
     Container st3 = st2;
 
@@ -169,11 +169,24 @@ void stringMoveTest() {
     const std::string *cptr = &st2[1];
     std::string *ptr = const_cast<std::string *>(cptr);
     *(ptr + 2) = "canary should be destroyed";
-    st2.dump();
+    //st2.dump();
 
     Container st3 = std::move(st2);
 
   } catch (StackException& exc) {
+    std::cerr << exc;
+  }
+}
+
+void copyStack() {
+  try {
+    Stack<std::string> st;
+    st.push("hello, comrade!");
+    st.push("stack overflow");
+    std::cout << st[0] << ' ' << st[1] << '\n';
+    Stack<std::string> st2 = st;
+    //std::cout << st2[0] << ' ' << st2[1] << '\n';
+  } catch (const StackException& exc) {
     std::cerr << exc;
   }
 }

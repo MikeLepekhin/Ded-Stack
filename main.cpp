@@ -22,27 +22,16 @@ void printFirstK(int k) {
   }
 }
 
-void copyStack() {
-  Stack<std::string> st;
-  st.push("hello, comrade!");
-  st.push("stack overflow");
-  std::cout << st[0] << ' ' << st[1] << '\n';
-  Stack<std::string> st2 = st;
-  std::cout << st2[0] << ' ' << st2[1] << '\n';
-}
-
 int main() {
   try {
-    copyStack();
+    stringMoveTest<Stack<std::string>>();
     nullPtrTest1<Stack<int>>();
     nullPtrTest2<Stack<int>>();
     okTest<Stack<int>>();
     hashSumTest1<Stack<int>>();
     canaryTest1<Stack<int>>();
     canaryTest2<Stack<int>>();
-    stringCopyTest<Stack<std::string>>();
-    //stringMoveTest<Stack<std::string>>();
-  } catch (StackException stackException) {
+  } catch (StackException& stackException) {
     std::cerr << stackException << '\n';
   }
   return 0;
